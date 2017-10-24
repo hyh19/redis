@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# 安装编译工具
-yum install -y gcc make
+# 安装工具软件
+yum install -y gcc make wget
 
 cd /tmp
 
