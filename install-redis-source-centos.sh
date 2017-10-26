@@ -33,5 +33,3 @@ REDIS_CONFIG_FILE="${INSTALL_DIRECTORY}/etc/6379.conf" \
 REDIS_LOG_FILE="${INSTALL_DIRECTORY}/log/6379.log" \
 REDIS_DATA_DIR="${INSTALL_DIRECTORY}/data/6379" \
 REDIS_EXECUTABLE="${INSTALL_DIRECTORY}/bin/redis-server" ./utils/install_server.sh
-
-ln -s $INSTALL_DIRECTORY /usr/local/redis/default
