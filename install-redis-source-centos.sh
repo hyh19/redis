@@ -26,9 +26,8 @@ make install
 cd $WORKING_DIRECTORY
 
 # 配置并启动
-REDIS_PORT=6379
-REDIS_CONFIG_FILE="/etc/redis/${REDIS_PORT}.conf"
-REDIS_LOG_FILE="/var/log/redis_${REDIS_PORT}.log"
-REDIS_DATA_DIR="/var/lib/redis/${REDIS_PORT}"
-REDIS_EXECUTABLE=`command -v redis-server`
-sudo ./utils/install_server.sh
+sudo REDIS_PORT=6379 \
+REDIS_CONFIG_FILE=/etc/redis/6379.conf \
+REDIS_LOG_FILE=/var/log/redis_6379.log \
+REDIS_DATA_DIR=/var/lib/redis/6379 \
+REDIS_EXECUTABLE=`command -v redis-server` ./utils/install_server.sh
