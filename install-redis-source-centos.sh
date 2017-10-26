@@ -8,8 +8,6 @@ DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
 DOWNLOAD_DIRECTORY="/tmp"
 # 工作目录
 WORKING_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
-# 安装目录
-INSTALL_DIRECTORY
 
 yum install -y wget gcc make
 
