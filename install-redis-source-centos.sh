@@ -32,8 +32,12 @@ ln -s $INSTALL_DIRECTORY $SYMBOL_LINK
 cd $WORKING_DIRECTORY
 
 # 配置并启动
-sudo REDIS_PORT=6379 \
-REDIS_CONFIG_FILE="${SYMBOL_LINK}/etc/6379.conf" \
-REDIS_LOG_FILE="${SYMBOL_LINK}/log/6379.log" \
-REDIS_DATA_DIR="${SYMBOL_LINK}/data/6379" \
+PORT=6379
+sudo REDIS_PORT=$PORT \
+REDIS_CONFIG_FILE="${SYMBOL_LINK}/etc/${PORT}.conf" \
+REDIS_LOG_FILE="${SYMBOL_LINK}/log/${PORT}.log" \
+REDIS_DATA_DIR="${SYMBOL_LINK}/data/${PORT}" \
 REDIS_EXECUTABLE="${SYMBOL_LINK}/bin/redis-server" ./utils/install_server.sh
+
+echo "export PATH=${PATH}:${SYMBOL_LINK}/bin" > /etc/profile.d/redis.sh
+echo "提示：不要忘记执行命令 source /etc/profile.d/redis.sh 让 PATH 变量的修改生效"
