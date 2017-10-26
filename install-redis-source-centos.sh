@@ -25,6 +25,8 @@ make
 
 make install PREFIX=$INSTALL_DIRECTORY
 
+ln -s $INSTALL_DIRECTORY /usr/local/redis/default
+
 cd $WORKING_DIRECTORY
 
 # 配置并启动
