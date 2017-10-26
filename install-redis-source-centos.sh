@@ -1,23 +1,26 @@
 #!/bin/bash
 
-cd /tmp
+# Redis 版本
+REDIS_VERSION="redis-4.0.2"
+# 下载地址
+DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
+# 下载目录
+DOWNLOAD_DIRECTORY="/tmp"
+# 工作目录
+WORKING_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
 
-# 安装工具软件
 yum install -y wget gcc make
 
-# 下载安装包
-wget http://download.redis.io/releases/redis-4.0.2.tar.gz
+cd $DOWNLOAD_DIRECTORY
 
-# 解压
-tar xzf redis-4.0.2.tar.gz
+wget $DOWNLOAD_URL
 
-cd redis-4.0.2
+tar xzf "${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
 
-# 编译
+cd $WORKING_DIRECTORY
+
 make
 
-# 安装
-make install PREFIX=/usr/local/redis/redis-4.0.2
+make install PREFIX="/usr/local/redis/${REDIS_VERSION}"
 
-# 创建符号链接
-ln -s /usr/local/redis/redis-4.0.2 /usr/local/redis/default
+ln -s "/usr/local/redis/${REDIS_VERSION}" /usr/local/redis/default
