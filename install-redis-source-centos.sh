@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd /tmp
+
 # 安装工具软件
 yum install -y wget gcc make
 
