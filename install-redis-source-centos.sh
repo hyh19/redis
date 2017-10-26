@@ -6,8 +6,10 @@ REDIS_VERSION="redis-4.0.2"
 DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
 # 下载目录
 DOWNLOAD_DIRECTORY="/tmp"
-# 工作目录
-WORKING_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
+# 源码包保存路径
+TAR_PATH="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
+# 源码包解压目录
+SOURCE_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
 # 安装目录
 INSTALL_DIRECTORY="/usr/local/redis/${REDIS_VERSION}"
 # 符号链接
@@ -17,19 +19,43 @@ yum install -y wget gcc make
 
 cd $DOWNLOAD_DIRECTORY
 
-wget $DOWNLOAD_URL
+# 如果没有源码包，则重新下载。
+if [ ! -e "${TAR_PATH}" ]
+then
+    wget -O $TAR_PATH $DOWNLOAD_URL
+fi
 
-tar xzf "${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
+# 删除旧源码目录
+if [ -d "$SOURCE_DIRECTORY" ]
+then
+    rm -rf $SOURCE_DIRECTORY
+fi
 
-cd $WORKING_DIRECTORY
+# 解压源码包
+tar xzf $TAR_PATH
+
+cd $SOURCE_DIRECTORY
+
+# 删除旧安装目录
+if [ -d "$INSTALL_DIRECTORY" ]
+then
+    rm -rf $INSTALL_DIRECTORY
+fi
 
 make
 
 make install PREFIX=$INSTALL_DIRECTORY
 
+# 删除旧符号链接
+if [ -L "$SYMBOL_LINK" ]
+then
+    rm -f $SYMBOL_LINK
+fi
+
+# 创建符号链接
 ln -s $INSTALL_DIRECTORY $SYMBOL_LINK
 
-cd $WORKING_DIRECTORY
+cd $SOURCE_DIRECTORY
 
 # 配置并启动
 PORT=6379
