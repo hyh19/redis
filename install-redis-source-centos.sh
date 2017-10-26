@@ -8,6 +8,8 @@ DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
 DOWNLOAD_DIRECTORY="/tmp"
 # 工作目录
 WORKING_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
+# 安装目录
+INSTALL_DIRECTORY
 
 yum install -y wget gcc make
 
@@ -21,15 +23,13 @@ cd $WORKING_DIRECTORY
 
 make
 
-make install PREFIX="/usr/local/redis/${REDIS_VERSION}"
+make install
 
-ln -s "/usr/local/redis/${REDIS_VERSION}" /usr/local/redis/default
+cd $WORKING_DIRECTORY
 
 # 配置并启动
-REDIS_PORT=6379
-REDIS_CONFIG_FILE="/etc/redis/${REDIS_PORT}.conf"
-REDIS_LOG_FILE="/var/log/redis_${REDIS_PORT}.log"
-REDIS_DATA_DIR="/var/lib/redis/${REDIS_PORT}"
-REDIS_EXECUTABLE="/usr/local/redis/default/bin/redis-server"
-
-${WORKING_DIRECTORY}/utils/install_server.sh
+sudo REDIS_PORT=6379 \
+REDIS_CONFIG_FILE=/etc/redis/${REDIS_PORT}.conf \
+REDIS_LOG_FILE=/var/log/redis_${REDIS_PORT}.log \
+REDIS_DATA_DIR=/var/lib/redis/${REDIS_PORT} \
+REDIS_EXECUTABLE=`command -v redis-server` ./utils/install_server.sh
