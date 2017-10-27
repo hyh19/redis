@@ -18,9 +18,9 @@ INSTALL_DIRECTORY="/usr/local/redis/${REDIS_VERSION}"
 SYMBOL_LINK="/usr/local/redis/default"
 
 # 安装工具软件
-if [ "$DISTRIBUTION" == "centos" ]; then
+if [ "$DISTRIBUTION" = "centos" ]; then
     yum install -y gcc make wget tar
-elif [ "$DISTRIBUTION" == "ubuntu" ]; then
+elif [ "$DISTRIBUTION" = "ubuntu" ]; then
     apt-get update
     apt-get install -y build-essential libtool wget tar
 else
