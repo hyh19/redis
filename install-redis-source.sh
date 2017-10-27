@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Linux 发行版本
+DISTRIBUTION=$1
 # Redis 版本
 REDIS_VERSION="redis-4.0.2"
 # 下载地址
@@ -7,7 +9,7 @@ DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
 # 下载目录
 DOWNLOAD_DIRECTORY="/tmp"
 # 源码包保存路径
-TAR_PATH="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
+SOURCE_PACKAGE="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
 # 源码包解压目录
 SOURCE_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
 # 安装目录
@@ -15,14 +17,23 @@ INSTALL_DIRECTORY="/usr/local/redis/${REDIS_VERSION}"
 # 符号链接
 SYMBOL_LINK="/usr/local/redis/default"
 
-yum install -y wget gcc make
+# 安装工具软件
+if [ "$DISTRIBUTION" == "centos" ]; then
+    yum install -y gcc make wget tar
+elif [ "$DISTRIBUTION" == "ubuntu" ]; then
+    apt-get update
+    apt-get install -y build-essential libtool wget tar
+else
+    echo "错误：未知操作系统版本"
+    exit 1
+fi
 
 cd $DOWNLOAD_DIRECTORY
 
 # 如果没有源码包，则重新下载。
-if [ ! -e "${TAR_PATH}" ]
+if [ ! -e "${SOURCE_PACKAGE}" ]
 then
-    wget -O $TAR_PATH $DOWNLOAD_URL
+    wget -O $SOURCE_PACKAGE $DOWNLOAD_URL
 fi
 
 # 删除旧源码目录
@@ -32,7 +43,7 @@ then
 fi
 
 # 解压源码包
-tar xzf $TAR_PATH
+tar xzf $SOURCE_PACKAGE
 
 cd $SOURCE_DIRECTORY
 
