@@ -1,80 +1,144 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Linux 发行版本
-DISTRIBUTION=$1
-# Redis 版本
-REDIS_VERSION="redis-4.0.2"
-# 下载地址
-DOWNLOAD_URL="http://download.redis.io/releases/${REDIS_VERSION}.tar.gz"
-# 下载目录
-DOWNLOAD_DIRECTORY="/tmp"
+# 工作目录
+WORKING_DIR=/tmp
+
+# 软件名称
+SOFTWARE_NAME=redis
+
+# 软件版本
+SOFTWARE_VERSION=4.0.2
+
+# 源码包名称
+ARCHIVE_NAME="${SOFTWARE_NAME}-${SOFTWARE_VERSION}.tar.gz"
+
+# 源码包下载地址
+ARCHIVE_DOWNLOAD_URL="http://download.redis.io/releases/${ARCHIVE_NAME}"
+
+# 源码包解压后目录名称
+SOURCE_DIR_NAME="${SOFTWARE_NAME}-${SOFTWARE_VERSION}"
+
 # 源码包保存路径
-SOURCE_PACKAGE="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}.tar.gz"
-# 源码包解压目录
-SOURCE_DIRECTORY="${DOWNLOAD_DIRECTORY}/${REDIS_VERSION}"
-# 安装目录
-INSTALL_DIRECTORY="/usr/local/redis/${REDIS_VERSION}"
-# 符号链接
-SYMBOL_LINK="/usr/local/redis/default"
+ARCHIVE_SAVE_PATH="${WORKING_DIR}/${ARCHIVE_NAME}"
 
-# 安装工具软件
-if [ "$DISTRIBUTION" = "centos" ]; then
+# 源码所在目录
+SOURCE_DIR="${WORKING_DIR}/${SOURCE_DIR_NAME}"
+
+# 安装目录的根目录
+INSTALL_ROOT=/usr/local/${SOFTWARE_NAME}
+
+# 安装目录
+INSTALL_DIR="${INSTALL_ROOT}/${SOFTWARE_NAME}-${SOFTWARE_VERSION}"
+
+# 当前使用版本的符号链接
+CURRENT_VERSION="${INSTALL_ROOT}/current"
+
+# 二进制文件路径的配置文件
+SOFTWARE_PROFILE="/etc/profile.d/${SOFTWARE_NAME}.sh"
+
+# 判断 Linux 发行版本的脚本
+CHECK_SYS_SCRIPT_NAME="check_sys.sh"
+CHECK_SYS_SCRIPT_DOWNLOAD_URL="https://github.com/mrhuangyuhui/shell/raw/snippets/${CHECK_SYS_SCRIPT_NAME}"
+CHECK_SYS_SCRIPT_SAVE_PATH="${WORKING_DIR}/${CHECK_SYS_SCRIPT_NAME}"
+
+# 使用 yum 安装依赖
+function install_dependencies_with_yum() {
     yum install -y gcc make wget tar
-elif [ "$DISTRIBUTION" = "ubuntu" ]; then
+}
+
+# 使用 apt 安装依赖
+function install_dependencies_with_apt() {
     apt-get update
-    apt-get install -y build-essential libtool wget tar
+    apt-get install dh-autoreconf libcurl4-gnutls-dev libexpat1-dev  gettext zlib1g-dev libssl-dev -y
+    apt-get install asciidoc xmlto docbook2x -y
+    ln -s /usr/bin/db2x_docbook2texi /usr/bin/docbook2x-texi
+}
+
+# 编译和安装源码
+function make_and_install() {
+    # 创建安装目录
+    mkdir -p $INSTALL_DIR
+    # 进入源码目录
+    cd $SOURCE_DIR
+
+    make
+    make install PREFIX=$INSTALL_DIR
+}
+
+# 配置二进制文件路径
+function config_binary_path() {
+    echo "export PATH=\${PATH}:${CURRENT_VERSION}/bin" > $SOFTWARE_PROFILE
+}
+
+# 进入工作目录
+cd $WORKING_DIR
+
+# 下载判断发行版本的脚本
+rm -f $CHECK_SYS_SCRIPT_SAVE_PATH
+wget -O $CHECK_SYS_SCRIPT_SAVE_PATH $CHECK_SYS_SCRIPT_DOWNLOAD_URL
+
+if [ -e "$CHECK_SYS_SCRIPT_SAVE_PATH" ]; then
+    . $CHECK_SYS_SCRIPT_SAVE_PATH
 else
-    echo "错误：未知操作系统版本"
+    echo "[ERROR] Download ${CHECK_SYS_SCRIPT_NAME} failed."
     exit 1
 fi
 
-cd $DOWNLOAD_DIRECTORY
-
-# 如果没有源码包，则重新下载。
-if [ ! -e "${SOURCE_PACKAGE}" ]
-then
-    wget -O $SOURCE_PACKAGE $DOWNLOAD_URL
+# 安装依赖
+if check_sys "packageManager" "yum"; then
+    install_dependencies_with_yum
+elif check_sys "packageManager" "apt"; then
+    install_dependencies_with_apt
+else
+    echo "[ERROR] Not supported distro."
+    exit 1
 fi
 
-# 删除旧源码目录
-if [ -d "$SOURCE_DIRECTORY" ]
-then
-    rm -rf $SOURCE_DIRECTORY
+# 下载源码包
+if [ ! -e "$ARCHIVE_SAVE_PATH" ]; then
+    wget -O $ARCHIVE_SAVE_PATH $ARCHIVE_DOWNLOAD_URL
+fi
+
+# 下载失败，不再继续。
+if [ ! -e "$ARCHIVE_SAVE_PATH" ]; then
+    echo "[ERROR] Download ${ARCHIVE_NAME} failed."
+    exit 1
+fi
+
+# 备份旧的源码目录
+if [ -d "$SOURCE_DIR" ]; then
+    mv $SOURCE_DIR "${SOURCE_DIR}-$(date +%Y%m%d%H%M%S)"
+fi
+
+# 备份旧的安装目录
+if [ -d "$INSTALL_DIR" ]; then
+    mv $INSTALL_DIR "${INSTALL_DIR}-$(date +%Y%m%d%H%M%S)"
 fi
 
 # 解压源码包
-tar xzf $SOURCE_PACKAGE
+tar zxvf $ARCHIVE_SAVE_PATH
 
-cd $SOURCE_DIRECTORY
-
-# 删除旧安装目录
-if [ -d "$INSTALL_DIRECTORY" ]
-then
-    rm -rf $INSTALL_DIRECTORY
-fi
-
-make
-
-make install PREFIX=$INSTALL_DIRECTORY
-
-# 删除旧符号链接
-if [ -L "$SYMBOL_LINK" ]
-then
-    rm -f $SYMBOL_LINK
-fi
+# 开始编译和安装
+make_and_install
 
 # 创建符号链接
-ln -s $INSTALL_DIRECTORY $SYMBOL_LINK
+if [ -L "$CURRENT_VERSION" ]; then
+    rm -f $CURRENT_VERSION
+fi
 
-cd $SOURCE_DIRECTORY
+ln -s $INSTALL_DIR $CURRENT_VERSION
 
-# 配置并启动
+# 配置二进制文件路径
+config_binary_path
+
+# 配置 Redis 服务器
 PORT=6379
 sudo REDIS_PORT=$PORT \
-REDIS_CONFIG_FILE="${SYMBOL_LINK}/etc/${PORT}.conf" \
-REDIS_LOG_FILE="${SYMBOL_LINK}/log/${PORT}.log" \
-REDIS_DATA_DIR="${SYMBOL_LINK}/data/${PORT}" \
-REDIS_EXECUTABLE="${SYMBOL_LINK}/bin/redis-server" ./utils/install_server.sh
+REDIS_CONFIG_FILE="${CURRENT_VERSION}/etc/${PORT}.conf" \
+REDIS_LOG_FILE="${CURRENT_VERSION}/log/${PORT}.log" \
+REDIS_DATA_DIR="${CURRENT_VERSION}/data/${PORT}" \
+REDIS_EXECUTABLE="${CURRENT_VERSION}/bin/redis-server" ./utils/install_server.sh
 
-echo "export PATH=${PATH}:${SYMBOL_LINK}/bin" > /etc/profile.d/redis.sh
-echo "提示：不要忘记执行命令 source /etc/profile.d/redis.sh 让 PATH 变量的修改生效"
+echo "################################################################################"
+echo "# Open a new terminal or enter: source ${SOFTWARE_PROFILE}"
+echo "################################################################################"
